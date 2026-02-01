@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EVALUATION_TYPES } from '../constants';
 
 interface SetupScreenProps {
@@ -12,6 +12,25 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, onShowHistory }) => 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [type, setType] = useState(EVALUATION_TYPES[0]);
   const [error, setError] = useState('');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +60,17 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, onShowHistory }) => 
         <p className="text-slate-500 mt-2 mb-8">Preencha os dados da área para iniciar</p>
 
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl shadow-lg text-left space-y-6">
+          {deferredPrompt && (
+            <button 
+              type="button"
+              onClick={handleInstallClick}
+              className="w-full bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center mb-4 animate-bounce"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Instalar Aplicativo no Celular
+            </button>
+          )}
+
           <div>
             <label htmlFor="area-code" className="flex items-center text-sm font-medium text-slate-600 mb-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
