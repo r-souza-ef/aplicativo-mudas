@@ -1,0 +1,5 @@
+{
+  "name": "Avaliação de Mudas",
+  "description": "Um aplicativo para avaliar a qualidade de mudas em campo, calcular taxas de problemas e gerar relatórios detalhados.",
+  "requestFramePermissions": []
+}
