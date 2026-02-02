@@ -7,7 +7,7 @@
     <title>Avaliação de Mudas</title>
     
     <!-- PWA Meta Tags -->
-    <link rel="manifest" href="./manifest.json" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#15803d" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -47,14 +47,14 @@
 </head>
   <body class="bg-slate-50 overflow-x-hidden">
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').then(registration => {
-            console.log('SW registrado com sucesso');
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('SW registrado com sucesso em: ', registration.scope);
           }).catch(err => {
-            console.error('Falha ao registrar SW', err);
+            console.error('Falha ao registrar SW: ', err);
           });
         });
       }
