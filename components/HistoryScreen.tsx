@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { EvaluationData, SeedlingStatus, HoleStatus, DistanceStatus } from '../types';
-import { getSavedEvaluations, getAllEvaluations } from '../utils/storage';
+import { getSavedEvaluations, getAllEvaluations, deleteEvaluation } from '../utils/storage';
 import { exportToExcel } from '../utils/export';
 
 interface HistoryScreenProps {
@@ -12,12 +12,17 @@ interface HistoryScreenProps {
 const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewEvaluation }) => {
   const [evaluations, setEvaluations] = useState<Record<string, EvaluationData[]>>({});
   const [activeTab, setActiveTab] = useState<'mudas' | 'covas'>('mudas');
-  const allEvaluations = useMemo(() => getAllEvaluations(), []);
+  
+  const refreshHistory = () => {
+    setEvaluations(getSavedEvaluations());
+  };
 
   useEffect(() => {
-    setEvaluations(getSavedEvaluations());
+    refreshHistory();
   }, []);
   
+  const allEvaluations = useMemo(() => getAllEvaluations(), [evaluations]);
+
   const filteredEvaluations = useMemo(() => {
       const result: Record<string, EvaluationData[]> = {};
       for (const monthKey in evaluations) {
@@ -47,6 +52,14 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewEvaluation 
     if (monthEvaluations && monthEvaluations.length > 0) {
       const typeName = activeTab === 'mudas' ? 'Mudas' : 'Covas';
       exportToExcel(monthEvaluations, `Relatorio_${typeName}_${monthKey.replace('-', '_')}`);
+    }
+  };
+
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita abrir a visualização ao clicar no ícone de lixeira
+    if (window.confirm('Tem certeza que deseja apagar esta avaliação? Esta ação não pode ser desfeita.')) {
+      deleteEvaluation(id);
+      refreshHistory();
     }
   };
   
@@ -83,6 +96,12 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewEvaluation 
   const DownloadIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
+  );
+
+  const TrashIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
   );
   
@@ -135,21 +154,32 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewEvaluation 
                 </div>
                 <div className="space-y-3">
                 {filteredEvaluations[monthKey].map(evaluation => (
-                    <button 
-                    key={evaluation.id} 
-                    onClick={() => onViewEvaluation(evaluation)} 
-                    className="w-full bg-white p-4 rounded-2xl shadow-lg text-left flex items-center justify-between hover:ring-2 hover:ring-green-500 transition-all duration-200"
+                    <div 
+                      key={evaluation.id} 
+                      className="group relative bg-white rounded-2xl shadow-lg hover:ring-2 hover:ring-green-500 transition-all duration-200 flex items-stretch overflow-hidden"
                     >
-                    <div>
-                        <p className="font-bold text-lg">Área {evaluation.areaCode}</p>
-                        <p className="text-sm text-slate-500">{evaluation.type}</p>
-                        <p className="text-xs text-slate-400 mt-1">{evaluation.date}</p>
+                      <button 
+                        onClick={() => onViewEvaluation(evaluation)} 
+                        className="flex-grow p-4 text-left flex items-center justify-between"
+                      >
+                        <div>
+                            <p className="font-bold text-lg">Área {evaluation.areaCode}</p>
+                            <p className="text-sm text-slate-500">{evaluation.type}</p>
+                            <p className="text-xs text-slate-400 mt-1">{evaluation.date}</p>
+                        </div>
+                        <div className="text-right mr-8">
+                            <p className="text-2xl font-bold text-green-600">{getQualityRate(evaluation).toFixed(1)}%</p>
+                            <p className="text-xs text-slate-500">Qualidade</p>
+                        </div>
+                      </button>
+                      <button 
+                        onClick={(e) => handleDelete(evaluation.id!, e)}
+                        className="p-3 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors duration-200 flex items-center justify-center border-l border-slate-100"
+                        title="Apagar Avaliação"
+                      >
+                        <TrashIcon />
+                      </button>
                     </div>
-                    <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">{getQualityRate(evaluation).toFixed(1)}%</p>
-                        <p className="text-xs text-slate-500">Qualidade</p>
-                    </div>
-                    </button>
                 ))}
                 </div>
             </div>

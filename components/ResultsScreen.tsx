@@ -4,7 +4,7 @@ import { EvaluationData, SeedlingStatus, HoleStatus, DistanceStatus, EvaluationR
 import { STATUS_DETAILS, HOLE_STATUS_DETAILS, DISTANCE_STATUS_DETAILS } from '../constants';
 import StatCard from './StatCard';
 import ProgressBar from './ProgressBar';
-import { saveEvaluation } from '../utils/storage';
+import { saveEvaluation, deleteEvaluation } from '../utils/storage';
 
 interface ResultsScreenProps {
   evaluationData: EvaluationData;
@@ -20,6 +20,13 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ evaluationData, onBack })
     const savedData = saveEvaluation(currentEvaluation);
     setCurrentEvaluation(savedData);
     setIsSaved(true);
+  };
+
+  const handleDeleteFromResults = () => {
+    if (currentEvaluation.id && window.confirm('Tem certeza que deseja apagar esta avaliação do histórico?')) {
+      deleteEvaluation(currentEvaluation.id);
+      onBack();
+    }
   };
 
   const results: EvaluationResults = useMemo(() => {
@@ -79,6 +86,7 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ evaluationData, onBack })
     return { text: 'Ruim', color: 'bg-red-500' };
   };
   
+  // Added const to properly declare qualityStatus variable
   const qualityStatus = getQualityStatus();
 
   const isHoleQualityEval = currentEvaluation.type === 'Avaliação de qualidade de covas';
@@ -149,10 +157,16 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ evaluationData, onBack })
       
       <div className="space-y-3">
         {isViewingHistory ? (
-            <button onClick={onBack} className="w-full bg-green-700 text-white font-bold p-4 rounded-lg hover:bg-green-800 transition-colors duration-300 flex items-center justify-center shadow-md">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8a5 5 0 000-10H6" /></svg>
-                Voltar ao Histórico
-            </button>
+            <div className="grid grid-cols-1 gap-3">
+              <button onClick={onBack} className="w-full bg-green-700 text-white font-bold p-4 rounded-lg hover:bg-green-800 transition-colors duration-300 flex items-center justify-center shadow-md">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8a5 5 0 000-10H6" /></svg>
+                  Voltar ao Histórico
+              </button>
+              <button onClick={handleDeleteFromResults} className="w-full bg-red-50 text-red-600 border border-red-200 font-bold p-4 rounded-lg hover:bg-red-600 hover:text-white transition-all duration-300 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  Apagar do Histórico
+              </button>
+            </div>
         ) : (
             <>
                 <button 

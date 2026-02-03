@@ -1,3 +1,4 @@
+
 import { EvaluationData } from '../types';
 
 const STORAGE_KEY = 'mudas_evaluations';
@@ -53,6 +54,13 @@ export const saveEvaluation = (evaluationData: EvaluationData): EvaluationData =
   evaluations.unshift(newEvaluation); // Add to the beginning
   saveAllEvaluations(evaluations);
   return newEvaluation;
+};
+
+// Public function to delete an evaluation
+export const deleteEvaluation = (id: string) => {
+  const evaluations = getAllEvaluations();
+  const updatedEvaluations = evaluations.filter(e => e.id !== id);
+  saveAllEvaluations(updatedEvaluations);
 };
 
 // Public function to get saved evaluations grouped by month
