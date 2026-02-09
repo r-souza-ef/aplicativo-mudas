@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Screen, EvaluationData, SeedlingStatus, HoleStatus, DistanceStatus } from './types';
 import { TOTAL_SEEDLINGS, TOTAL_HOLES, TOTAL_DISTANCE_HOLES } from './constants';
 import SetupScreen from './components/SetupScreen';
@@ -11,6 +10,20 @@ import DistanceEvaluationScreen from './components/DistanceEvaluationScreen';
 const App: React.FC = () => {
   const [screen, setScreen] = useState<Screen>(Screen.Setup);
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null);
+  const [online, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const onOnline = () => setOnline(true);
+    const onOffline = () => setOnline(false);
+
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
 
   const handleStartEvaluation = useCallback((areaCode: string, date: string, type: string) => {
     let totalSamples = TOTAL_SEEDLINGS;
@@ -97,8 +110,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col items-center p-4">
-      <div className="w-full max-w-md mx-auto">
+    <div className="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col items-center">
+      {!online && (
+        <div className="w-full bg-amber-500 text-white text-center py-1 text-xs font-bold animate-pulse sticky top-0 z-[100] shadow-md">
+          MODO OFFLINE ATIVO - Dados salvos localmente
+        </div>
+      )}
+      <div className="w-full max-w-md mx-auto p-4">
         {renderScreen()}
       </div>
     </div>

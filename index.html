@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -49,14 +48,9 @@
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          // Usando caminho relativo para garantir que o escopo seja o diretório atual
-          navigator.serviceWorker.register('sw.js').then(registration => {
-            console.log('SW registrado com sucesso. Escopo:', registration.scope);
-          }).catch(err => {
-            console.error('Falha ao registrar SW:', err);
-          });
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js");
         });
       }
     </script>

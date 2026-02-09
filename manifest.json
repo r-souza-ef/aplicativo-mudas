@@ -3,7 +3,7 @@
   "name": "Avaliação de Mudas",
   "short_name": "Mudas",
   "description": "Aplicativo para vistoria e avaliação de mudas e covas em campo.",
-  "start_url": "/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#15803d",
