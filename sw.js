@@ -1,48 +1,79 @@
-const CACHE_NAME = "app-cache-v2";
 
-const APP_ASSETS = [
-  "./",
-  "./index.html",
-  "./manifest.json"
+const CACHE_NAME = 'mudas-pwa-v5';
+
+// Arquivos básicos para o "esqueleto" do app
+const PRECACHE_ASSETS = [
+  './index.html',
+  './manifest.json',
+  'https://cdn.tailwindcss.com',
+  'https://cdn-icons-png.flaticon.com/512/628/628283.png'
 ];
 
-// Instala
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
+// Instalação: Cacheia o básico
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS);
+    })
   );
+  self.skipWaiting();
 });
 
-// Ativa
-self.addEventListener("activate", (event) => {
+// Ativação: Limpa caches antigos
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME && cacheName.startsWith('mudas-pwa-')) {
+            return caches.delete(cacheName);
           }
         })
-      )
-    )
+      );
+    })
   );
+  self.clients.claim();
 });
 
-// Fetch (estratégia SPA)
-self.addEventListener("fetch", (event) => {
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      caches.match("./index.html").then((response) => {
-        return response || fetch(event.request);
-      })
-    );
-    return;
-  }
+// Interceptação de requisições
+self.addEventListener('fetch', (event) => {
+  // Apenas métodos GET
+  if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.match(event.request).then((cachedResponse) => {
+      // Se está no cache, entrega e tenta atualizar em background
+      if (cachedResponse) {
+        event.waitUntil(
+          fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              return caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, networkResponse);
+              });
+            }
+          }).catch(() => {/* Silencia erros offline */})
+        );
+        return cachedResponse;
+      }
+
+      // Se não está no cache, busca na rede
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Fallback para navegação offline
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+          return null;
+        });
     })
   );
 });
