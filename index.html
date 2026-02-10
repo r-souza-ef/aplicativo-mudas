@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -48,9 +49,19 @@
     <div id="root"></div>
     <script type="module" src="index.tsx"></script>
     <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js");
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // Resolve o caminho absoluto do service worker baseado na localização atual da página
+          // Isso ajuda a evitar erros de origem em ambientes de sandbox/iframe onde o base URL pode estar incorreto
+          const swUrl = new URL('./sw.js', window.location.href).href;
+          
+          navigator.serviceWorker.register(swUrl).then(registration => {
+            console.log('SW registrado com sucesso. Escopo:', registration.scope);
+          }).catch(err => {
+            // Em ambientes de preview (como o AI Studio), o Service Worker pode ser bloqueado por políticas de segurança do navegador
+            // Devido à origem dinâmica. Usamos warn para não poluir o console como erro fatal.
+            console.warn('Falha ao registrar Service Worker (comum em ambientes de preview):', err.message);
+          });
         });
       }
     </script>
